@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestão Escolar Sem Reload</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 40px; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); width: 400px; }
+        h2 { color: #1a73e8; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        #listaAlunos { margin-top: 25px; }
+        .item { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #1a73e8; }
+        .btn-del { background: #ff4d4d; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>🏫 Gestão de Alunos</h2>
+        <input type="text" id="nome" placeholder="Nome do Aluno">
+        <input type="number" id="idade" placeholder="Idade">
+        <button onclick="cadastrar()">Cadastrar Agora</button>
+
+        <div id="listaAlunos"></div>
+    </div>
+
+    <script>
+        // Função para buscar e mostrar alunos
+        async function carregarAlunos() {
+            const res = await fetch('/listar');
+            const alunos = await res.json();
+            const lista = document.getElementById('listaAlunos');
+            lista.innerHTML = '';
+            alunos.forEach(a => {
+                lista.innerHTML += `
+                    <div class="item">
+                        <div><b>${a[1]}</b><br><small>${a[2]} anos</small></div>
+                        <button class="btn-del" onclick="excluir(${a[0]})">Remover</button>
+                    </div>`;
+            });
+        }
+
+        // Função para cadastrar sem mudar de página
+        async function cadastrar() {
+            const nome = document.getElementById('nome').value;
+            const idade = document.getElementById('idade').value;
+
+            await fetch('/cadastrar', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({nome, idade})
+            });
+
+            document.getElementById('nome').value = '';
+            document.getElementById('idade').value = '';
+            carregarAlunos(); // Atualiza a lista na hora
+        }
+
+        // Função para excluir
+        async function excluir(id) {
+            if(confirm('Deseja remover?')) {
+                await fetch(`/excluir/${id}`, { method: 'DELETE' });
+                carregarAlunos();
+            }
+        }
+
+        // Carrega ao abrir a página
+        carregarAlunos();
+    </script>
+</body>
+</html>
